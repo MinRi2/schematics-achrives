@@ -31488,8 +31488,15 @@ async function run() {
     console.error("No QQ_DOC_COOKIES!");
     return;
   }
-  const arrayBuffer = await fetchSchematicsExcel();
-  const buffer = Buffer.from(arrayBuffer);
+  let buffer;
+  try {
+    const arrayBuffer = await fetchSchematicsExcel();
+    buffer = Buffer.from(arrayBuffer);
+  } catch (error) {
+    console.error(error);
+    console.error("Failed to fetch schematics excel. Please check your QQ_DOC_COOKIES.");
+    return;
+  }
   await rm(OUT_PATH, {
     recursive: true,
     force: true
@@ -31507,6 +31514,9 @@ async function fetchSchematicsExcel() {
     method: "POST"
   });
   let json = await resp.json();
+  if (json.ret != 0) {
+    throw new Error(json.msg);
+  }
   let operationId = json.operationId;
   const data = await startPolling(async () => {
     const resp2 = await fetch(`https://docs.qq.com/v1/export/query_progress?operationId=${operationId}`, {

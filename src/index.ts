@@ -12,6 +12,8 @@ const DOC_ID = "300000000$TshKyHrmMlQR";
 const WISE_BOOK = "智能表1";
 
 interface ExportData {
+    ret: number;
+    msg: string;
     operationId: string;
 }
 
@@ -37,8 +39,15 @@ async function run() {
         return;
     }
 
-    const arrayBuffer = await fetchSchematicsExcel();
-    const buffer = Buffer.from(arrayBuffer);
+    let buffer;
+    try {
+        const arrayBuffer = await fetchSchematicsExcel();
+        buffer = Buffer.from(arrayBuffer);
+    } catch (error) {
+        console.error(error);
+        console.error("Failed to fetch schematics excel. Please check your QQ_DOC_COOKIES.");
+        return;
+    }
 
     await rm(OUT_PATH, {
         recursive: true,
@@ -62,6 +71,9 @@ async function fetchSchematicsExcel() {
     });
 
     let json: ExportData = await resp.json();
+    if (json.ret != 0) {
+        throw new Error(json.msg);
+    }
 
     let operationId = json.operationId;
     const data = await startPolling(async () => {
