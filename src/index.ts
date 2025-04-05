@@ -9,7 +9,7 @@ const schematicSuffix = ".mesh";
 
 const docId = "300000000$TshKyHrmMlQR";
 const wiseBook = "智能表1";
-const qqDocCookie = getInput("qqDocCookies");
+const qqDocCookies = getInput("qqDocCookies");
 
 interface ExportData {
     operationId: string;
@@ -30,8 +30,8 @@ interface SchematicData {
 }
 
 async function run() {
-    if (qqDocCookie == "") {
-        console.error("No qq doc cookie!");
+    if (qqDocCookies == "") {
+        console.error("No QQ_DOC_COOKIES!");
         return;
     }
 
@@ -47,10 +47,10 @@ async function fetchSchematicsExcel() {
     let resp = await fetch("https://docs.qq.com/v1/export/export_office", {
         "headers": {
             "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
-            "cookie": qqDocCookie,
+            "cookie": qqDocCookies,
         },
         "body": `exportType=0&switches=%7B%22embedFonts%22%3Afalse%7D&docId=${docId}`,
-        "method": "POST"
+        "method": "POST",
     });
 
     let json: ExportData = await resp.json();
@@ -59,7 +59,7 @@ async function fetchSchematicsExcel() {
     const data = await startPolling(async () => {
         const resp = await fetch(`https://docs.qq.com/v1/export/query_progress?operationId=${operationId}`, {
             "headers": {
-                "cookie": qqDocCookie,
+                "cookie": qqDocCookies,
             },
             "method": "GET"
         });
