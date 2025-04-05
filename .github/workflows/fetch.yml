@@ -17,7 +17,7 @@ jobs:
           bun-version: latest
       - name: Run script
         env:
-          docCookie: ${{ secrets.docCookies }}
+          qqDocCookies: ${{ secrets.QQ_DOC_COOKIES }}
         run: |
           bun install
           bun ./src/index.ts

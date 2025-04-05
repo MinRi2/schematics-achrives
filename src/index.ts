@@ -9,7 +9,7 @@ const schematicSuffix = ".mesh";
 
 const docId = "300000000$TshKyHrmMlQR";
 const wiseBook = "智能表1";
-const qqDocUserCookie = getInput("docCookie");
+const qqDocCookie = getInput("qqDocCookies");
 
 interface ExportData {
     operationId: string;
@@ -42,7 +42,7 @@ async function fetchSchematicsExcel() {
     let resp = await fetch("https://docs.qq.com/v1/export/export_office", {
         "headers": {
             "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
-            "cookie": qqDocUserCookie,
+            "cookie": qqDocCookie,
         },
         "body": `exportType=0&switches=%7B%22embedFonts%22%3Afalse%7D&docId=${docId}`,
         "method": "POST"
@@ -54,7 +54,7 @@ async function fetchSchematicsExcel() {
     const data = await startPolling(async () => {
         const resp = await fetch(`https://docs.qq.com/v1/export/query_progress?operationId=${operationId}`, {
             "headers": {
-                "cookie": qqDocUserCookie,
+                "cookie": qqDocCookie,
             },
             "method": "GET"
         });
