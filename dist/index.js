@@ -31541,6 +31541,7 @@ async function handleExcel(buffer) {
     try {
       await mkdir(path.dirname(filePath), { recursive: true });
       await writeFile(filePath, Buffer.from(base64, "base64"));
+      console.log("Save schematic", fileName);
     } catch (error) {
       console.error("Failed to save", filePath, error);
     }
