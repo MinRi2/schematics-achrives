@@ -34,6 +34,7 @@ run();
 async function run() {
     if (!QQ_DOC_COOKIES || QQ_DOC_COOKIES == "") {
         console.error("No QQ_DOC_COOKIES!");
+        return;
     }
 
     const arrayBuffer = await fetchSchematicsExcel();
