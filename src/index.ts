@@ -4,7 +4,7 @@ import XLSX from "node-xlsx";
 import { startPolling } from "./utils";
 
 const OUT_PATH = "./schematics";
-const SCHEMATIC_SUFFIX = ".mesh";
+const SCHEMATIC_SUFFIX = ".msch";
 
 const QQ_DOC_COOKIES = process.env["QQ_DOC_COOKIES"]!;
 
