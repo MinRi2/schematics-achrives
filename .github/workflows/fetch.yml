@@ -19,7 +19,6 @@ jobs:
         env:
           QQ_DOC_COOKIES: ${{ secrets.QQ_DOC_COOKIES }}
         run: |
-          bun install
           bun ./dist/index.js
       - name: Commit files
         run: |
