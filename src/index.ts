@@ -1,9 +1,9 @@
-import { mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile } from "fs/promises";
 import path from "path";
 import XLSX from "node-xlsx";
 import { startPolling } from "./utils";
 
-const OUT_PATH = "./schematics";
+const OUT_PATH = path.resolve("./schematics");
 const SCHEMATIC_SUFFIX = ".msch";
 
 const QQ_DOC_COOKIES = process.env["QQ_DOC_COOKIES"]!;
@@ -40,9 +40,15 @@ async function run() {
     const arrayBuffer = await fetchSchematicsExcel();
     const buffer = Buffer.from(arrayBuffer);
 
+    await rm(OUT_PATH, {
+        recursive: true,
+        force: true
+    });
+
     // read locally
     // const buffer = await readFile(path.resolve("Mindustry 蓝图档案馆.xlsx"));
-    await handleExcel(buffer);
+    const data = await handleExcel(buffer);
+    await genSchematics(data);
 }
 
 async function fetchSchematicsExcel() {
@@ -94,12 +100,16 @@ async function handleExcel(buffer: Buffer) {
         return { category, name, base64 };
     });
 
+    return schematicsData;
+}
+
+async function genSchematics(schematicsData: SchematicData[]) {
     const jobs = schematicsData.map(async (data) => {
         const { category, name, base64 } = data;
 
         const handledName = name.replaceAll("/", "-").replaceAll("\n", "-");
         const fileName = handledName + SCHEMATIC_SUFFIX;
-        const filePath = path.resolve(OUT_PATH, category, fileName);
+        const filePath = path.join(OUT_PATH, category, fileName);
 
         try {
             await mkdir(path.dirname(filePath), { recursive: true });
@@ -120,16 +130,16 @@ async function readData() {
     const readDataJobs = fileNames.map(async (category) => {
         console.log("Read category:", category);
 
-        const categoryPath = path.resolve(OUT_PATH, category);
+        const categoryPath = path.join(OUT_PATH, category);
         const schematicFiles = await readdir(categoryPath);
 
         const readJobs = schematicFiles.map(async (schematicFileName) => {
-            const schematicFilePath = path.resolve(categoryPath, schematicFileName);
+            const schematicFilePath = path.join(categoryPath, schematicFileName);
 
             try {
                 const string = await readFile(schematicFilePath, "utf-8");
                 const base64 = Buffer.from(string, "utf-8").toString("base64");
-                schematicsData.push({ category, name: path.basename(schematicFileName), base64 });
+                schematicsData.push({ category, name: path.basename(schematicFileName, SCHEMATIC_SUFFIX), base64 });
                 console.log("Read schematic", schematicFileName);
             } catch (error) {
                 console.error("Failed to read schematic:", schematicFilePath, error);

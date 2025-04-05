@@ -1,6 +1,6 @@
 // @bun
 // src/index.ts
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 // node_modules/node-xlsx/node_modules/xlsx/xlsx.mjs
@@ -31477,7 +31477,7 @@ function startPolling(request, options = {
 }
 
 // src/index.ts
-var OUT_PATH = "./schematics";
+var OUT_PATH = path.resolve("./schematics");
 var SCHEMATIC_SUFFIX = ".msch";
 var QQ_DOC_COOKIES = process.env["QQ_DOC_COOKIES"];
 var DOC_ID = "300000000$TshKyHrmMlQR";
@@ -31490,7 +31490,12 @@ async function run() {
   }
   const arrayBuffer = await fetchSchematicsExcel();
   const buffer = Buffer.from(arrayBuffer);
-  await handleExcel(buffer);
+  await rm(OUT_PATH, {
+    recursive: true,
+    force: true
+  });
+  const data = await handleExcel(buffer);
+  await genSchematics(data);
 }
 async function fetchSchematicsExcel() {
   let resp = await fetch("https://docs.qq.com/v1/export/export_office", {
@@ -31532,12 +31537,15 @@ async function handleExcel(buffer) {
     const [category, author, name, _, base64] = arr;
     return { category, name, base64 };
   });
+  return schematicsData;
+}
+async function genSchematics(schematicsData) {
   const jobs = schematicsData.map(async (data) => {
     const { category, name, base64 } = data;
     const handledName = name.replaceAll("/", "-").replaceAll(`
 `, "-");
     const fileName = handledName + SCHEMATIC_SUFFIX;
-    const filePath = path.resolve(OUT_PATH, category, fileName);
+    const filePath = path.join(OUT_PATH, category, fileName);
     try {
       await mkdir(path.dirname(filePath), { recursive: true });
       await writeFile(filePath, Buffer.from(base64, "base64"));
