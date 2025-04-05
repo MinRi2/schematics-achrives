@@ -31478,7 +31478,7 @@ function startPolling(request, options = {
 
 // src/index.ts
 var OUT_PATH = "./schematics";
-var SCHEMATIC_SUFFIX = ".mesh";
+var SCHEMATIC_SUFFIX = ".msch";
 var QQ_DOC_COOKIES = process.env["QQ_DOC_COOKIES"];
 var DOC_ID = "300000000$TshKyHrmMlQR";
 var WISE_BOOK = "\u667A\u80FD\u88681";
