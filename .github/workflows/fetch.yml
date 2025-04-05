@@ -17,7 +17,7 @@ jobs:
           bun-version: latest
       - name: Run script
         env:
-          qqDocCookies: ${{ secrets.QQ_DOC_COOKIES }}
+          QQ_DOC_COOKIES: ${{ secrets.QQ_DOC_COOKIES }}
         run: |
           bun install
           bun ./dist/index.js

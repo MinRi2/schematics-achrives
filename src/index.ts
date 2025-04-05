@@ -2,14 +2,14 @@ import { mkdir, readdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import XLSX from "node-xlsx";
 import { startPolling } from "./utils";
-import { getInput } from "@actions/core";
 
-const outPath = "./schematics";
-const schematicSuffix = ".mesh";
+const OUT_PATH = "./schematics";
+const SCHEMATIC_SUFFIX = ".mesh";
 
-const docId = "300000000$TshKyHrmMlQR";
-const wiseBook = "智能表1";
-const qqDocCookies = getInput("qqDocCookies");
+const QQ_DOC_COOKIES = process.env["QQ_DOC_COOKIES"]!;
+
+const DOC_ID = "300000000$TshKyHrmMlQR";
+const WISE_BOOK = "智能表1";
 
 interface ExportData {
     operationId: string;
@@ -29,10 +29,11 @@ interface SchematicData {
     base64: string;
 }
 
+run();
+
 async function run() {
-    if (qqDocCookies == "") {
+    if (!QQ_DOC_COOKIES || QQ_DOC_COOKIES == "") {
         console.error("No QQ_DOC_COOKIES!");
-        return;
     }
 
     const arrayBuffer = await fetchSchematicsExcel();
@@ -47,9 +48,9 @@ async function fetchSchematicsExcel() {
     let resp = await fetch("https://docs.qq.com/v1/export/export_office", {
         "headers": {
             "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
-            "cookie": qqDocCookies,
+            "cookie": QQ_DOC_COOKIES,
         },
-        "body": `exportType=0&switches=%7B%22embedFonts%22%3Afalse%7D&docId=${docId}`,
+        "body": `exportType=0&switches=%7B%22embedFonts%22%3Afalse%7D&docId=${DOC_ID}`,
         "method": "POST",
     });
 
@@ -59,7 +60,7 @@ async function fetchSchematicsExcel() {
     const data = await startPolling(async () => {
         const resp = await fetch(`https://docs.qq.com/v1/export/query_progress?operationId=${operationId}`, {
             "headers": {
-                "cookie": qqDocCookies,
+                "cookie": QQ_DOC_COOKIES,
             },
             "method": "GET"
         });
@@ -83,7 +84,7 @@ async function fetchSchematicsExcel() {
 async function handleExcel(buffer: Buffer) {
     const excelData = XLSX.parse(buffer, {
         type: "buffer",
-        sheets: wiseBook,
+        sheets: WISE_BOOK,
         cellHTML: false,
     });
 
@@ -96,8 +97,8 @@ async function handleExcel(buffer: Buffer) {
         const { category, name, base64 } = data;
 
         const handledName = name.replaceAll("/", "-").replaceAll("\n", "-");
-        const fileName = handledName + schematicSuffix;
-        const filePath = path.resolve(outPath, category, fileName);
+        const fileName = handledName + SCHEMATIC_SUFFIX;
+        const filePath = path.resolve(OUT_PATH, category, fileName);
 
         try {
             await mkdir(path.dirname(filePath), { recursive: true });
@@ -113,11 +114,11 @@ async function handleExcel(buffer: Buffer) {
 async function readData() {
     const schematicsData: SchematicData[] = [];
 
-    const fileNames = await readdir(path.resolve(outPath));
+    const fileNames = await readdir(path.resolve(OUT_PATH));
     const readDataJobs = fileNames.map(async (category) => {
         console.log("Read category:", category);
 
-        const categoryPath = path.resolve(outPath, category);
+        const categoryPath = path.resolve(OUT_PATH, category);
         const schematicFiles = await readdir(categoryPath);
 
         const readJobs = schematicFiles.map(async (schematicFileName) => {
@@ -139,5 +140,3 @@ async function readData() {
 
     return schematicsData;
 }
-
-run();
