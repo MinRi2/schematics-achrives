@@ -30,6 +30,11 @@ interface SchematicData {
 }
 
 async function run() {
+    if (qqDocCookie == "") {
+        console.error("No qq doc cookie!");
+        return;
+    }
+
     const arrayBuffer = await fetchSchematicsExcel();
     const buffer = Buffer.from(arrayBuffer);
 
