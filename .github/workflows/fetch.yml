@@ -1,0 +1,32 @@
+name: Fetch Schematics
+
+on:
+  schedule:
+    - cron: '* */5 * * *' 
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Run script
+        env:
+          docCookie: ${{ secrets.docCookies }}
+        run: |
+          bun install
+          bun ./src/index.ts
+      - name: Commit files
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "Github Actions[bot]"
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
