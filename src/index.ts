@@ -104,6 +104,7 @@ async function handleExcel(buffer: Buffer) {
         try {
             await mkdir(path.dirname(filePath), { recursive: true });
             await writeFile(filePath, Buffer.from(base64, "base64"));
+            console.log("Save schematic", fileName);
         } catch (error) {
             console.error("Failed to save", filePath, error);
         }
@@ -129,6 +130,7 @@ async function readData() {
                 const string = await readFile(schematicFilePath, "utf-8");
                 const base64 = Buffer.from(string, "utf-8").toString("base64");
                 schematicsData.push({ category, name: path.basename(schematicFileName), base64 });
+                console.log("Read schematic", schematicFileName);
             } catch (error) {
                 console.error("Failed to read schematic:", schematicFilePath, error);
             }
