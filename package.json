@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "bun ./src/index.ts"
+    "start": "bun ./src/index.ts",
+    "build": "bun build ./src/index.ts --outdir ./dist --target bun"
   },
   "dependencies": {
     "@actions/core": "^1.11.1",
