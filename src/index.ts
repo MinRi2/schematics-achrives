@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, rm, writeFile } from "fs/promises";
+import { readdir, readFile, rm } from "fs/promises";
 import path from "path";
 import XLSX from "node-xlsx";
 import { startPolling } from "./utils";
@@ -110,12 +110,19 @@ async function handleExcel(buffer: Buffer) {
         cellHTML: false,
     });
 
-    const schematicsData: SchematicData[] = excelData[0]!.data.map(arr => {
+    const schematicsData: SchematicData[] = excelData[0]!.data.filter(arr => {
+        const [category, author, name, _, base64] = arr;
+        return isValidBase64(base64) || console.error("Invalid schematic", name);
+    }).map(arr => {
         const [category, author, name, _, base64] = arr;
         return { category, name, base64 };
     });
 
     return schematicsData;
+
+    function isValidBase64(str: string) {
+        return /^[A-Za-z0-9+/]+={0,2}$/.test(str) && (str.length % 4 === 0);
+    }
 }
 
 async function genSchematics(schematicsData: SchematicData[]) {
@@ -127,8 +134,7 @@ async function genSchematics(schematicsData: SchematicData[]) {
         const filePath = path.join(OUT_PATH, category, fileName);
 
         try {
-            await mkdir(path.dirname(filePath), { recursive: true });
-            await writeFile(filePath, Buffer.from(base64, "base64"), "binary");
+            await Bun.write(filePath, Buffer.from(base64, "base64"));
             console.log("Save schematic", fileName);
         } catch (error) {
             console.error("Failed to save", filePath, error);
@@ -155,8 +161,9 @@ async function readData() {
             const schematicFilePath = path.join(categoryPath, schematicFileName);
 
             try {
-                const string = await readFile(schematicFilePath, "binary");
-                const base64 = Buffer.from(string, "binary").toBase64();
+                const buffer = Buffer.from(await Bun.file(schematicFilePath).arrayBuffer());
+                const base64 = buffer.toBase64();
+                
                 schematicsData.push({ category, name: path.basename(schematicFileName, SCHEMATIC_SUFFIX), base64 });
                 console.log("Read schematic", schematicFileName);
             } catch (error) {
