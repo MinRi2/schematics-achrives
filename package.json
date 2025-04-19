@@ -1,13 +1,20 @@
 {
   "scripts": {
     "start": "bun ./src/index.ts",
-    "build": "bun build ./src/index.ts --outdir ./dist --target bun"
+    "build": "bun build ./src/index.ts --minify --outdir ./dist --target bun"
   },
   "dependencies": {
     "node-xlsx": "^0.24.0"
   },
   "devDependencies": {
-    "@github/local-action": "^3.1.4",
+    "@types/bun": "latest",
     "@types/node": "^22.14.0"
+  },
+  "name": "schematics-achrives",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "peerDependencies": {
+    "typescript": "^5"
   }
 }

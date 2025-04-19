@@ -6,7 +6,7 @@ import { startPolling } from "./utils";
 const OUT_PATH = path.resolve("./schematics");
 const SCHEMATIC_SUFFIX = ".msch";
 
-const QQ_DOC_COOKIES = process.env["QQ_DOC_COOKIES"]!;
+const QQ_DOC_COOKIES = Bun.env["QQ_DOC_COOKIES"]!;
 
 const DOC_ID = "300000000$TshKyHrmMlQR";
 const WISE_BOOK = "智能表1";
@@ -34,19 +34,24 @@ interface SchematicData {
 run();
 
 async function run() {
-    if (!QQ_DOC_COOKIES || QQ_DOC_COOKIES == "") {
-        console.error("No QQ_DOC_COOKIES!");
-        return;
-    }
+    let buffer: Buffer;
 
-    let buffer;
-    try {
-        const arrayBuffer = await fetchSchematicsExcel();
-        buffer = Buffer.from(arrayBuffer);
-    } catch (error) {
-        console.error(error);
-        console.error("Failed to fetch schematics excel. Please check your QQ_DOC_COOKIES.");
-        return;
+    if(Bun.env.NODE_ENV === "local"){
+        buffer = await readFile(path.resolve("Mindustry 蓝图档案馆.xlsx"));
+    }else{
+        if (!QQ_DOC_COOKIES || QQ_DOC_COOKIES == "") {
+            console.error("No QQ_DOC_COOKIES!");
+            return;
+        }
+
+        try {
+            const arrayBuffer = await fetchSchematicsExcel();
+            buffer = Buffer.from(arrayBuffer);
+        } catch (error) {
+            console.error(error);
+            console.error("Failed to fetch schematics excel. Please check your QQ_DOC_COOKIES.");
+            return;
+        }
     }
 
     await rm(OUT_PATH, {
@@ -54,8 +59,6 @@ async function run() {
         force: true
     });
 
-    // read locally
-    // const buffer = await readFile(path.resolve("Mindustry 蓝图档案馆.xlsx"));
     const data = await handleExcel(buffer);
     await genSchematics(data);
 }
@@ -70,7 +73,7 @@ async function fetchSchematicsExcel() {
         "method": "POST",
     });
 
-    let json: ExportData = await resp.json();
+    let json: ExportData = await resp.json() as ExportData;
     if (json.ret != 0) {
         throw new Error(json.msg);
     }
@@ -107,7 +110,7 @@ async function handleExcel(buffer: Buffer) {
         cellHTML: false,
     });
 
-    const schematicsData: SchematicData[] = excelData[0].data.map(arr => {
+    const schematicsData: SchematicData[] = excelData[0]!.data.map(arr => {
         const [category, author, name, _, base64] = arr;
         return { category, name, base64 };
     });
@@ -125,7 +128,7 @@ async function genSchematics(schematicsData: SchematicData[]) {
 
         try {
             await mkdir(path.dirname(filePath), { recursive: true });
-            await writeFile(filePath, Buffer.from(base64, "base64"));
+            await writeFile(filePath, Buffer.from(base64, "base64"), "binary");
             console.log("Save schematic", fileName);
         } catch (error) {
             console.error("Failed to save", filePath, error);
@@ -133,6 +136,9 @@ async function genSchematics(schematicsData: SchematicData[]) {
     });
 
     await Promise.all(jobs);
+
+    console.log("All schematics saved to", OUT_PATH);
+    console.log("Total schematics:", schematicsData.length);
 }
 
 async function readData() {
@@ -149,8 +155,8 @@ async function readData() {
             const schematicFilePath = path.join(categoryPath, schematicFileName);
 
             try {
-                const string = await readFile(schematicFilePath, "utf-8");
-                const base64 = Buffer.from(string, "utf-8").toString("base64");
+                const string = await readFile(schematicFilePath, "binary");
+                const base64 = Buffer.from(string, "binary").toBase64();
                 schematicsData.push({ category, name: path.basename(schematicFileName, SCHEMATIC_SUFFIX), base64 });
                 console.log("Read schematic", schematicFileName);
             } catch (error) {
