@@ -1,1 +1,2 @@
 *.msch binary
+dist/* linguist-language=true
